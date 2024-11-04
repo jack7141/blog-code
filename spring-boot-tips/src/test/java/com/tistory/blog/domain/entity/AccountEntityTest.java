@@ -15,7 +15,7 @@ class AccountEntityTest {
     @Test
     @DisplayName(value = "불안전한 객채 생성 패턴")
     void createUnstableAccountEntity() {
-        AccountEntity accountEntity = AccountEntity.creditAccountBuilder()
+        AccountEntity accountEntity = AccountEntity.builder()
                 .accountHolder("")
                 .accountNumber(ACCOUNTNUMBER)
                 .bankName(BANKNAME)
@@ -28,8 +28,8 @@ class AccountEntityTest {
     @Test
     @DisplayName(value = "안정적인 객채 생성 패턴")
     void createstableAccountEntity() {
-        AccountEntity accountEntity = AccountEntity.creditAccountBuilder()
-                .accountHolder(BANKNAME)
+        AccountEntity accountEntity = AccountEntity.builder()
+                .accountHolder("")
                 .accountNumber(ACCOUNTNUMBER)
                 .bankName(BANKNAME)
                 .build();
@@ -39,7 +39,7 @@ class AccountEntityTest {
     }
 
     @Test
-    @DisplayName(value = "안정적인 객채 생성 빌더 이름 명명")
+    @DisplayName(value = "안정적인 객채 생성 빌더 이름 명명 + builderClassName 생략")
     void createAccountEntityBuilderName() {
         AccountEntity accountEntity = AccountEntity.creditAccountBuilder()
                 .accountHolder("")

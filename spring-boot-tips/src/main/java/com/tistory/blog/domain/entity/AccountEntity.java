@@ -7,9 +7,6 @@ import lombok.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-//@AllArgsConstructor
-//@Builder
-//@Component
 @Entity
 @Table(name = "account")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,27 +30,39 @@ public class AccountEntity {
     private String accountHolder;
 
     // 불안전한 객채 생성 패턴
-//    @Builder
-//    public AccountEntity(String bankName, String accountNumber, String accountHolder) {
-//        this.bankName = bankName;
-//        this.accountNumber = accountNumber;
-//        this.accountHolder = accountHolder;
-//    }
+    @Builder
+    public AccountEntity(String bankName, String accountNumber, String accountHolder) {
+        this.bankName = bankName;
+        this.accountNumber = accountNumber;
+        this.accountHolder = accountHolder;
+    }
 
     // 안전한 객채 생성 패턴
-//    @Builder
-//    public AccountEntity(String bankName, String accountNumber, String accountHolder) {
-//        Assert.hasText(bankName, "bankName 값이 누락되었습니다.");
-//        Assert.hasText(accountNumber, "accountNumber 값이 누락되었습니다.");
-//        Assert.hasText(accountHolder, "accountHolder 값이 누락되었습니다.");
-//
-//        this.bankName = bankName;
-//        this.accountNumber = accountNumber;
-//        this.accountHolder = accountHolder;
-//    }
+    @Builder
+    public AccountEntity(String bankName, String accountNumber, String accountHolder) {
+        Assert.hasText(bankName, "bankName 값이 누락되었습니다.");
+        Assert.hasText(accountNumber, "accountNumber 값이 누락되었습니다.");
+        Assert.hasText(accountHolder, "accountHolder 값이 누락되었습니다.");
+
+        this.bankName = bankName;
+        this.accountNumber = accountNumber;
+        this.accountHolder = accountHolder;
+    }
 
     // 안전한 객채 생성 이름 부여
     @Builder(builderClassName = "CreditAccountBuilder", builderMethodName = "creditAccountBuilder")
+    public AccountEntity(String bankName, String accountNumber, String accountHolder) {
+        Assert.hasText(bankName, "bankName 값이 누락되었습니다.");
+        Assert.hasText(accountNumber, "accountNumber 값이 누락되었습니다.");
+        Assert.hasText(accountHolder, "accountHolder 값이 누락되었습니다.");
+
+        this.bankName = bankName;
+        this.accountNumber = accountNumber;
+        this.accountHolder = accountHolder;
+    }
+
+    // 안전한 객채 생성 이름 부여 + builderClassName 생략
+    @Builder(builderMethodName = "creditAccountBuilder")
     public AccountEntity(String bankName, String accountNumber, String accountHolder) {
         Assert.hasText(bankName, "bankName 값이 누락되었습니다.");
         Assert.hasText(accountNumber, "accountNumber 값이 누락되었습니다.");
