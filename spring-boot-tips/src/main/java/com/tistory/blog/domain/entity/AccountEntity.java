@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 @Entity
-@Table(name = "account")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@Table(name = "account")
 public class AccountEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,7 +49,7 @@ public class AccountEntity {
         this.accountHolder = accountHolder;
     }
 
-    // 안전한 객채 생성 이름 부여
+     // 안전한 객채 생성 이름 부여
     @Builder(builderClassName = "CreditAccountBuilder", builderMethodName = "creditAccountBuilder")
     public AccountEntity(String bankName, String accountNumber, String accountHolder) {
         Assert.hasText(bankName, "bankName 값이 누락되었습니다.");
