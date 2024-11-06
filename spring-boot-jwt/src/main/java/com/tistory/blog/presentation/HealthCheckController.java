@@ -7,10 +7,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/member")
-@Tag(name = "사용자", description = "사용자 관련 API")
-public class MemberController {
-
+@Tag(name = "Heart Beat", description = "서버 Health Checker")
+public class HealthCheckController {
     @GetMapping(value = "/ping")
     public ResponseEntity<String> ping() {
         return ResponseEntity.ok("pong");
