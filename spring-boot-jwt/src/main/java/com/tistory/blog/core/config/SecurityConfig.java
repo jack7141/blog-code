@@ -37,6 +37,14 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable);
 
+
+        /* H2 콘솔 프레임 옵션을 위해 추가 설정
+         * */
+        http
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                );
+
         return http.build();
     }
 
