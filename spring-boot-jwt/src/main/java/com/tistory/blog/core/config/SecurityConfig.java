@@ -50,6 +50,9 @@ public class SecurityConfig {
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
+        /*
+        * BCrypt 알고리즘 활용
+        * */
         return new BCryptPasswordEncoder();
     }
 

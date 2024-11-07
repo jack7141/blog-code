@@ -2,12 +2,10 @@ package com.tistory.blog.presentation;
 
 import com.tistory.blog.business.MemberService.MemberService;
 import com.tistory.blog.domain.dto.member.MemberDTO;
-import com.tistory.blog.domain.dto.member.SignupDTO;
-import com.tistory.blog.domain.entity.MemberEntity;
+import com.tistory.blog.domain.dto.Request.SignupDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
