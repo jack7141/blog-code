@@ -2,6 +2,7 @@ package com.tistory.blog.domain.dto.Request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
@@ -18,4 +19,15 @@ public class SignupDTO {
 
     @NotBlank(message = "핸드폰 번호를 입력해주세요.")
     private String phone;
+
+    private String role;
+
+    @Builder
+    public SignupDTO(String email, String password, String username, String phone, String role) {
+        this.email = email;
+        this.password = password;
+        this.username = username;
+        this.phone = phone;
+        this.role = (role == null || role.isEmpty()) ? "USER" : role;
+    }
 }

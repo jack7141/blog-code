@@ -33,8 +33,12 @@ public class MemberEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id")
+    private RoleEntity role;
+
     @Builder
-    public MemberEntity(String username, String password, String phone, String email) {
+    public MemberEntity(String username, String password, String phone, String email, RoleEntity role) {
         Assert.hasText(username, "username 값이 누락되었습니다.");
         Assert.hasText(password, "password 값이 누락되었습니다.");
         Assert.hasText(phone, "phone 값이 누락되었습니다.");
@@ -44,6 +48,7 @@ public class MemberEntity {
         this.password = password;
         this.phone = phone;
         this.email = email;
+        this.role = role;
     }
 
     @Override
