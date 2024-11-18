@@ -1,5 +1,6 @@
 package com.tistory.blog.business.MemberService;
 
+import com.tistory.blog.core.exception.DuplicateMemberException;
 import com.tistory.blog.core.exception.RestApiException;
 import com.tistory.blog.domain.dto.member.MemberDTO;
 import com.tistory.blog.domain.dto.Request.SignupDTO;
@@ -44,7 +45,7 @@ public class MemberService {
 
     void ValidateDuplicateEmailAndPhone(SignupDTO signupDTO){
         if (memberRepository.existsByEmailOrPhone(signupDTO.getEmail(), signupDTO.getPhone())) {
-            throw new RestApiException("중복된 이메일 또는 핸드폰 번호로 회원 가입을 시도했습니다.");
+            throw new DuplicateMemberException("중복된 이메일 또는 핸드폰 번호로 회원 가입을 시도했습니다.");
         }
     }
 }
