@@ -1,7 +1,6 @@
 package com.tistory.blog.business.MemberService;
 
 import com.tistory.blog.core.exception.DuplicateMemberException;
-import com.tistory.blog.core.exception.RestApiException;
 import com.tistory.blog.domain.dto.member.MemberDTO;
 import com.tistory.blog.domain.dto.Request.SignupDTO;
 import com.tistory.blog.domain.entity.MemberEntity;
