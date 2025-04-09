@@ -1,7 +1,17 @@
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import UUIDModel, SoftDeletableModel, TimeStampedModel
+
+from interaction.models import Comment, Like
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
 
 class Article(UUIDModel, SoftDeletableModel, TimeStampedModel):
     author = models.ForeignKey(
@@ -13,6 +23,9 @@ class Article(UUIDModel, SoftDeletableModel, TimeStampedModel):
     title = models.CharField(max_length=255, verbose_name='title')
     content = models.TextField(verbose_name='content')
     is_published = models.BooleanField(default=True)
+    tags = models.ManyToManyField(Tag, related_name='articles', blank=True)
+    comments = GenericRelation(Comment, related_query_name='article')
+    likes = GenericRelation(Like, related_query_name='article')
 
     class Meta:
         ordering = ['-created']
