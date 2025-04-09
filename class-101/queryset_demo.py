@@ -72,29 +72,6 @@ filtered_articles = Article.objects.exclude(
 )
 print(f"제목에 'django'가 없고, admin이 작성하지 않은 게시글 수: {filtered_articles.count()}")
 
-# 5. select_related()와 prefetch_related() - N+1 문제 해결
-print("\n=== 5. select_related()와 prefetch_related() 활용 ===")
-# 일반적인 쿼리 - N+1 문제 발생 가능
-print("N+1 문제가 발생할 수 있는 일반 쿼리:")
-articles_normal = Article.objects.all()[:5]
-for article in articles_normal:
-    # 여기서 article.author에 접근할 때마다 추가 쿼리 발생
-    print(f"- {article.title} (작성자: {article.author.username})")
-
-# select_related() 사용 - ForeignKey 관계 미리 로드 (JOIN 활용)
-print("\nselect_related() 사용 (정방향 참조 최적화):")
-articles_optimized = Article.objects.select_related('author')[:5]
-for article in articles_optimized:
-    # 추가 쿼리 없이 author 정보 사용 가능
-    print(f"- {article.title} (작성자: {article.author.username})")
-
-# prefetch_related() 사용 - ManyToMany 관계 미리 로드 (별도 쿼리 후 Python에서 결합)
-print("\nprefetch_related() 사용 (역방향 참조 최적화):")
-articles_with_tags = Article.objects.prefetch_related('tags')[:5]
-for article in articles_with_tags:
-    # 추가 쿼리 없이 tags 정보 사용 가능
-    tag_names = ", ".join([tag.name for tag in article.tags.all()])
-    print(f"- {article.title} (태그: {tag_names})")
 
 # 6. order_by() - 정렬하기
 print("\n=== 6. order_by() 활용 ===")
