@@ -188,54 +188,41 @@ for article in articles:
 # 댓글에 대한 대댓글 생성 (20% 확률로)
 comment_content_type = ContentType.objects.get_for_model(Comment)
 for comment in all_comments:
-    if random.random() < 0.9:  # 20% 확률
+    if random.random() < 0.2:  # 20% 확률로 수정
         # 랜덤 사용자와 댓글 내용 선택
         user = random.choice(users)
         text = random.choice(["동의합니다!", "좋은 의견이네요.", "감사합니다.", "말씀 감사합니다."])
-
-        # 댓글 생성 시간 이후의 날짜
-        max_days_after = (now - comment.created).days
-        if max_days_after > 0:
-            days_after = random.randint(0, max_days_after)
-        else:
-            days_after = 0
-        reply_date = comment.created + timedelta(days=days_after)
 
         # 대댓글 생성
         reply = Comment.objects.create(
             content_type=comment_content_type,
             object_id=comment.id,
             user=user,
-            content=text,
-            created=reply_date,
-            modified=reply_date
+            content=text
         )
-        print(reply)
         print(f"대댓글 생성: '{user.username}'의 대댓글")
 
 # 좋아요 생성 (30% 확률로)
 for article in articles:
     for user in users:
-        if random.random() < 0.9:  # 30% 확률
-            like = Like.objects.get_or_create(
+        if random.random() < 0.3:  # 30% 확률로 수정
+            like, created = Like.objects.get_or_create(
                 content_type=article_content_type,
                 object_id=article.id,
                 user=user
             )
-            print(like)
-            print(f"좋아요 생성: '{user.username}'이 게시글 '{article.title}'에 좋아요")
+            print(f"좋아요 생성: '{user.username}'이 게시글 '{article.title}'에 좋아요 (새로 생성: {created})")
 
 # 댓글 좋아요 생성 (10% 확률로)
 for comment in all_comments:
     for user in users:
-        if random.random() < 0.9:  # 10% 확률
-            like= Like.objects.get_or_create(
+        if random.random() < 0.1:  # 10% 확률로 수정
+            like, created = Like.objects.get_or_create(
                 content_type=comment_content_type,
                 object_id=comment.id,
                 user=user
             )
-            print(like)
-            print(f"좋아요 생성: '{user.username}'이 댓글에 좋아요")
+            print(f"좋아요 생성: '{user.username}'이 댓글에 좋아요 (새로 생성: {created})")
 
 print("==== 테스트 데이터 생성 완료 ====")
 print(f"생성된 사용자: {User.objects.count()}명")
