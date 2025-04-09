@@ -1,11 +1,15 @@
 import uuid
 
-from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from model_utils.managers import SoftDeletableManager
 from model_utils.models import UUIDModel, SoftDeletableModel
 
+
+class UserManager(BaseUserManager, SoftDeletableManager):
+    pass
 
 class User(UUIDModel, AbstractUser, SoftDeletableModel):
     user_id = models.CharField(max_length=20, null=True, blank=True)
@@ -16,3 +20,5 @@ class User(UUIDModel, AbstractUser, SoftDeletableModel):
     first_name = None
     last_name = None
     REQUIRED_FIELDS = []
+
+    objects = UserManager()
