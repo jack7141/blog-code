@@ -23,6 +23,12 @@ STATIC_ROOT = RESOURCE_DIR.joinpath("static")
 TEMPLATE_DIR = RESOURCE_DIR.joinpath("templates")
 SECRET_KEY = "django-insecure-3&p)p5e2s)+x#%a(f3#j_mngo+971ka(wroq7db48r*hgv#b7_"
 
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 DEBUG = True
 
@@ -52,6 +58,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rest_framework',
     'drf_yasg',
+    'products'
 ]
 
 MIDDLEWARE = [
