@@ -1,8 +1,18 @@
-# models.py (Fat Model 접근법)
+# products/models.py (Fat Model 패턴)
 from django.db import models
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from decimal import Decimal
+"""
+FatModel 방식
+"""
+class DiscountCode(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.code
 
 
 class Product(models.Model):
@@ -10,90 +20,125 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField(default=0)
-    is_on_sale = models.BooleanField(default=False)
-
-    def check_stock(self, quantity):
-        """재고 확인 메서드"""
-        if self.stock < quantity:
-            raise ValidationError(f"Not enough stock for {self.name}. Available: {self.stock}")
-        return True
-
-    def reduce_stock(self, quantity):
-        """재고 차감 메서드"""
-        if self.check_stock(quantity):
-            self.stock -= quantity
-            self.save()
 
     def __str__(self):
         return self.name
 
+    def apply_discount(self, discount_code_str):
+        """제품에 할인 적용 (Fat Model 패턴)"""
+        try:
+            discount = DiscountCode.objects.get(code=discount_code_str, is_active=True)
 
-class Order(models.Model):
-    STATUS_CHOICES = (
-        ('PENDING', 'Pending'),
-        ('PAID', 'Paid'),
-        ('SHIPPED', 'Shipped'),
-        ('DELIVERED', 'Delivered'),
-        ('CANCELLED', 'Cancelled'),
-    )
+            # 할인 코드 유효성 검증
+            if discount.expires_at and timezone.now() > discount.expires_at:
+                raise ValidationError("할인 코드가 만료되었습니다.")
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through='OrderItem')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+            # 할인 계산
+            discount_amount = self.price * (discount.percentage / Decimal('100'))
+            discounted_price = self.price - discount_amount
 
-    def calculate_discount(self):
-        """사용자 등급에 따른 할인율 계산"""
-        if hasattr(self.user, 'profile') and self.user.profile.is_premium:
-            return Decimal('0.10')  # 프리미엄 사용자 10% 할인
-        return Decimal('0')  # 일반 사용자 할인 없음
+            return {
+                'product': self,
+                'original_price': self.price,
+                'discount_code': discount_code_str,
+                'discount_percentage': discount.percentage,
+                'discounted_price': discounted_price
+            }
 
-    def calculate_total(self):
-        """주문 총액 계산"""
-        total = sum(item.get_subtotal() for item in self.orderitem_set.all())
-        discount = self.calculate_discount()
-        return total * (Decimal('1') - discount)
+        except DiscountCode.DoesNotExist:
+            raise ValidationError("유효하지 않은 할인 코드입니다.")
 
-    def update_status(self, new_status):
-        """주문 상태 변경 메서드"""
-        # 상태 변경 유효성 검증
-        valid_transitions = {
-            'PENDING': ['PAID', 'CANCELLED'],
-            'PAID': ['SHIPPED', 'CANCELLED'],
-            'SHIPPED': ['DELIVERED'],
-            'DELIVERED': [],  # 최종 상태
-            'CANCELLED': []  # 최종 상태
-        }
+    @classmethod
+    def get_discounted_products(cls, discount_code_str):
+        """모든 제품에 할인 적용 (Fat Model 패턴)"""
+        try:
+            # 할인 코드 유효성 검증
+            discount = DiscountCode.objects.get(code=discount_code_str, is_active=True)
+            from django.utils import timezone
+            if discount.expires_at and timezone.now() > discount.expires_at:
+                raise ValidationError("할인 코드가 만료되었습니다.")
 
-        if new_status not in valid_transitions[self.status]:
-            raise ValidationError(f"Cannot transition from {self.status} to {new_status}")
+            # 모든 제품에 할인 적용
+            products = cls.objects.all()
+            result = []
 
-        self.status = new_status
-        self.save()
+            for product in products:
+                discount_amount = product.price * (discount.percentage / Decimal('100'))
+                discounted_price = product.price - discount_amount
 
-    def __str__(self):
-        return f"Order {self.id} - {self.user.username}"
+                result.append({
+                    'id': product.id,
+                    'name': product.name,
+                    'original_price': product.price,
+                    'discounted_price': discounted_price
+                })
+
+            return result
+
+        except DiscountCode.DoesNotExist:
+            raise ValidationError("유효하지 않은 할인 코드입니다.")
 
 
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-    price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def get_subtotal(self):
-        """개별 상품의 소계 계산"""
-        return self.price_at_purchase * self.quantity
-
-    def save(self, *args, **kwargs):
-        # 첫 저장 시 상품 가격을 저장
-        if not self.pk:
-            self.price_at_purchase = self.product.price
-            # 재고 확인 및 차감
-            self.product.reduce_stock(self.quantity)
-
-        super().save(*args, **kwargs)
+"""
+Queryset + Manager를 활용한 방식
+"""
+class DiscountCode(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.quantity}x {self.product.name} in Order {self.order.id}"
+        return self.code
+
+
+class ProductQuerySet(models.QuerySet):
+    def with_discount(self, discount_code_str):
+        """할인이 적용된 제품 쿼리셋 반환"""
+        try:
+            # 할인 코드 유효성 검증
+            discount = DiscountCode.objects.get(code=discount_code_str, is_active=True)
+
+            if discount.expires_at and timezone.now() > discount.expires_at:
+                raise ValidationError("할인 코드가 만료되었습니다.")
+
+            # 제품 목록을 가져온 후 각 제품에 할인 적용
+            products = list(self)
+            result = []
+
+            for product in products:
+                discount_amount = product.price * (discount.percentage / Decimal('100'))
+                discounted_price = product.price - discount_amount
+
+                # 원본 제품 객체에 속성 추가
+                product.discounted_price = discounted_price
+                product.discount_percentage = discount.percentage
+                result.append(product)
+
+            return result
+
+        except DiscountCode.DoesNotExist:
+            raise ValidationError("유효하지 않은 할인 코드입니다.")
+
+
+class ProductManager(models.Manager):
+    def get_queryset(self):
+        return ProductQuerySet(self.model, using=self._db)
+
+    def with_discount(self, discount_code_str):
+        """할인이 적용된 제품 목록 반환"""
+        return self.get_queryset().with_discount(discount_code_str)
+
+
+class Product(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.PositiveIntegerField(default=0)
+
+    # 기본 매니저 교체
+    objects = ProductManager()
+
+    def __str__(self):
+        return self.name
