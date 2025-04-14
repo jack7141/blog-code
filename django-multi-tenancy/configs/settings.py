@@ -29,21 +29,25 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
-TENANT_APPS = [
+SHARED_APPS = [
+    'django_tenants',  # 필수
+    'customers',       # 테넌트 정보 관리 앱
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_tenants',
-    'order',
-    'products',
-    'customers'
 ]
 
+TENANT_APPS = [
+    # 테넌트별로 분리될 앱
+    'products',
+    'order',
+    'store',
+]
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -51,13 +55,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_tenants.middleware.main.TenantMainMiddleware',
 ]
 
-# 각 테넌트에서 사용할 앱들
-SHARED_APPS = [
-    'store',                # 테넌트 전용 앱 (쇼핑몰 관련)
-]
+
 
 
 DATABASE_ROUTERS = [
@@ -90,23 +90,21 @@ TENANT_MODEL = "customers.Client"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'tenant_schemas.postgresql_backend',
-        'NAME': 'postgres',
-        'USER': 'postgres',
+        'ENGINE': 'django_tenants.postgresql_backend',  # 특수 백엔드 사용
+        'NAME': 'multitenancy_db',
+        'USER': 'root',
         'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
+
+PUBLIC_SCHEMA_NAME = 'public'
+PUBLIC_SCHEMA_URLCONF = 'configs.urls_public'  # 공용 URL 설정
+TENANT_MODEL = "customers.Client"  # 테넌트 정보를 저장할 모델
+TENANT_DOMAIN_MODEL = "customers.Domain"  # 테넌트 도메인 정보를 저장할 모델
 
 
 # Password validation
