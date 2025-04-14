@@ -28,7 +28,6 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-# Application definition
 SHARED_APPS = [
     'django_tenants',  # 필수
     'customers',       # 테넌트 정보 관리 앱
@@ -41,13 +40,20 @@ SHARED_APPS = [
 ]
 
 TENANT_APPS = [
+    'django.contrib.contenttypes',  # 필수
+    'django.contrib.auth',  # 인증 기능 필요시
+    'django.contrib.sessions',  # 세션 필요시
+    'django.contrib.messages',  # 메시지 필요시
     # 테넌트별로 분리될 앱
     'products',
     'order',
     'store',
 ]
+
+# 중요: 중복을 제거하여 INSTALLED_APPS 설정
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    'django_tenants.middleware.main.TenantMainMiddleware', # 가장 상위에서 호출
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -60,11 +66,6 @@ MIDDLEWARE = [
 
 
 
-DATABASE_ROUTERS = [
-    'django_tenants.routers.TenantSyncRouter',
-]
-
-INSTALLED_APPS = SHARED_APPS + TENANT_APPS
 
 ROOT_URLCONF = 'configs.urls'
 
@@ -85,7 +86,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'configs.wsgi.application'
 
-TENANT_MODEL = "customers.Client"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -101,8 +101,119 @@ DATABASES = {
     }
 }
 
+"""
+python manage.py shell
+
+from customers.models import Client, Domain
+
+# 공용 테넌트 생성
+tenant = Client(
+    schema_name='public',  # 공용 스키마 이름
+    name='Public Tenant',
+    paid_until='2030-12-31',
+    on_trial=False
+)
+tenant.save()
+
+# 공용 도메인 연결
+domain = Domain()
+domain.domain = 'localhost'  # 로컬 개발 환경
+domain.tenant = tenant
+domain.is_primary = True
+domain.save()
+
+# 추가 테넌트 생성 예시
+tenant2 = Client(
+    schema_name='tenant1',
+    name='First Client',
+    paid_until='2025-12-31',
+    on_trial=True
+)
+tenant2.save()
+
+# 테넌트 도메인 연결
+domain2 = Domain()
+domain2.domain = 'tenant2.localhost'  # 로컬 개발용
+domain2.tenant = tenant3
+domain2.is_primary = True
+domain2.save()
+
+
+from django_tenants.utils import tenant_context
+from customers.models import Client
+from products.models import Product
+
+# 테넌트 불러오기
+public_tenant = Client.objects.get(schema_name='tenant1')
+tenant2 = Client.objects.get(schema_name='tenant2')
+
+# 공용 테넌트에 상품 추가
+with tenant_context(public_tenant):
+    Product.objects.create(
+        name="공용 상품 1", 
+        description="모든 테넌트에서 볼 수 있는 상품", 
+        price=10000
+    )
+    Product.objects.create(
+        name="공용 상품 2", 
+        description="또 다른 공용 상품", 
+        price=20000
+    )
+    
+    # 데이터 생성 확인
+    print(f"공용 테넌트 상품 개수: {Product.objects.count()}")
+    
+
+with tenant_context(tenant2):
+    Product.objects.create(
+        name="테넌트1 상품 1", 
+        description="테넌트1 전용 상품", 
+        price=15000
+    )
+    Product.objects.create(
+        name="테넌트1 상품 2", 
+        description="테넌트1의 프리미엄 상품", 
+        price=30000
+    )
+    Product.objects.create(
+        name="테넌트1 상품 3", 
+        description="테넌트1 한정판", 
+        price=50000
+    )
+    
+    # 데이터 생성 확인
+    print(f"테넌트1 상품 개수: {Product.objects.count()}")
+    
+
+migrate_schemas 명령어에는 몇 가지 옵션이 있습니다:
+
+python manage.py migrate_schemas --shared - 공유 앱만 마이그레이션
+python manage.py migrate_schemas --tenant - 테넌트 앱만 마이그레이션
+python manage.py migrate_schemas - 모든 것을 마이그레이션 (공유+테넌트)
+상황에 맞게 적절한 명령어를 사용해야 합니다. 이 경우에는 공유 스키마(public)에도 마이그레이션을 적용하려면 다음 명령어를 실행하세요:
+
+bash
+python manage.py migrate_schemas --shared
+또는 모든 스키마에 적용하려면:
+
+bash
+python manage.py migrate_schemas
+공유 앱과 테넌트 앱이 다른 이유는 데이터를 논리적으로 분리하기 위함입니다. 예를 들어:
+
+customers 앱은 공유 스키마에만 있어야 테넌트 정보를 한 곳에서 관리할 수 있습니다.
+products 앱은 각 테넌트 스키마에 있어야 테넌트별로 다른 상품 정보를 가질 수 있습니다.
+이 설계로 인해 django-tenants는 어떤 마이그레이션을 어느 스키마에 적용할지 구분해야 합니다.
+
+만약 모든 앱이 모든 스키마에 존재해야 한다면, SHARED_APPS와 TENANT_APPS 목록을 적절히 조정해야 합니다.
+"""
+
+DATABASE_ROUTERS = [
+    'django_tenants.routers.TenantSyncRouter',
+]
+
+TENANT_MODEL = "customers.Client"
 PUBLIC_SCHEMA_NAME = 'public'
-PUBLIC_SCHEMA_URLCONF = 'configs.urls_public'  # 공용 URL 설정
+PUBLIC_SCHEMA_URLCONF = 'configs.urls'  # 공용 URL 설정
 TENANT_MODEL = "customers.Client"  # 테넌트 정보를 저장할 모델
 TENANT_DOMAIN_MODEL = "customers.Domain"  # 테넌트 도메인 정보를 저장할 모델
 
@@ -125,6 +236,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ]
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
