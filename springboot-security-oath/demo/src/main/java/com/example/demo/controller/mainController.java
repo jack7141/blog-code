@@ -1,5 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -9,8 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
+@Slf4j
 public class mainController {
 
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -31,7 +37,20 @@ public class mainController {
     }
 
     @GetMapping("/join")
-    public String join() {
-        return "join";
+    public String joinForm() {
+        return "join"; // join.html 템플릿을 반환
+    }
+
+    @PostMapping("/joinProc")
+    public String joinProcess(User user) {
+        // 사용자 정보가 제공되었는지 확인
+        if (user.getPassword() == null || user.getUsername() == null) {
+            return "redirect:/join?error=missing_fields";
+        }
+
+        user.setRole("ROLE_ADMIN"); // 또는 일반 유저라면 "ROLE_USER"
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+        return "redirect:/admin";
     }
 }
