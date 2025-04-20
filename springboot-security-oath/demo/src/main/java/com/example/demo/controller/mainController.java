@@ -2,11 +2,13 @@ package com.example.demo.controller;
 
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -42,15 +44,33 @@ public class mainController {
     }
 
     @PostMapping("/joinProc")
-    public String joinProcess(User user) {
-        // 사용자 정보가 제공되었는지 확인
+    public String joinProcess(User user, HttpSession session) {
         if (user.getPassword() == null || user.getUsername() == null) {
             return "redirect:/join?error=missing_fields";
         }
 
-        user.setRole("ROLE_ADMIN"); // 또는 일반 유저라면 "ROLE_USER"
+        // 사용자 저장 로직...
+        user.setRole("ROLE_ADMIN");
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // 세션에 사용자 정보 저장
+        session.setAttribute("userId", savedUser.getId());
+        session.setAttribute("username", savedUser.getUsername());
+
         return "redirect:/admin";
     }
+
+    @GetMapping("/profile")
+    public String userProfile(HttpSession session, Model model) {
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        model.addAttribute("user", user);
+        return "profile";
+    }
+
 }

@@ -28,13 +28,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/**").authenticated()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().permitAll()
+                        .requestMatchers("/user/**").authenticated() // user 주소로 들어왔을때, 권한 체크
+                        .requestMatchers("/admin/**").hasRole("ADMIN") // admin 주소로 왔을떄, 권한 ADMIN 체크
+                        .anyRequest().permitAll() // 나머지 주소는 그냥 전체 허용
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .loginProcessingUrl("/loginProc")
+                        .loginProcessingUrl("/loginProc") // login 주소가 호출되면, 시큐리티가 낚아채서 대신 로그인을 진행시켜준다.
                         .defaultSuccessUrl("/")
                 );
 
