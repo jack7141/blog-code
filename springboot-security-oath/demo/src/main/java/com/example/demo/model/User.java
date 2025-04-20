@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Builder
@@ -15,7 +16,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users") // "user" 대신 "users"로 테이블 이름 변경
-public class User {
+public class User implements Serializable {
     @Id // primary key
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
